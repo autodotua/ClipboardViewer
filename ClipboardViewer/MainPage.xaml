@@ -7,6 +7,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
      xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
     mc:Ignorable="d"
+GotFocus="Page_GotFocus"
     Loaded="Page_Loaded">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
@@ -28,10 +29,11 @@
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="8"/>
+                            <RowDefinition Height="360"/>
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <TextBlock Text="可用的数据：" Margin="0,0,0,8"/>
-                        <ListBox x:Name="lbxUsable" Grid.Row="2" Background="Transparent" IsHitTestVisible="False">
+                        <ListBox x:Name="lbxUsable" BorderThickness="0" Grid.Row="2" Background="Transparent" IsHitTestVisible="False">
                             <CheckBox x:Name="chkImage">图片</CheckBox>
                             <CheckBox x:Name="chkHtml">HTML</CheckBox>
                             <CheckBox x:Name="chkRtf">富文本</CheckBox>
@@ -39,7 +41,9 @@
                             <CheckBox x:Name="chkText">文本</CheckBox>
                             <CheckBox x:Name="chkLink">网页链接</CheckBox>
                         </ListBox>
-                    </Grid>
+
+                            <TextBox IsReadOnly="True" BorderThickness="0" AcceptsReturn="True" Grid.Row="3" x:Name="txtAvaliable"/>
+                </Grid>
 
                     <Grid Grid.Column="2">
                         <Grid.RowDefinitions>
