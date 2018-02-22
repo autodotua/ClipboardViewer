@@ -12,6 +12,8 @@ using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
 using Windows.Storage.FileProperties;
+using Windows.Storage.Pickers;
+using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
@@ -34,6 +36,7 @@ namespace ClipboardViewer
         public MainPage()
         {
             this.InitializeComponent();
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
             Clipboard.ContentChanged += ClipboardContentChangedEventHandler;
         }
         ObservableCollection<StorageItemsBinding> storageItems = new ObservableCollection<StorageItemsBinding>();
@@ -48,12 +51,50 @@ namespace ClipboardViewer
 
         const string ToMushMessage = "包含的内容太大，请保存到文件查看。";
 
+        public bool DoingWork
+        {
+            set
+            {
+                grdLoding.Visibility = value ? Visibility.Visible : Visibility.Collapsed;
+                prgLoading.IsActive = value;
+            }
+        }
+
         byte[] imageBytes;
         string webString;
         string rtfString;
 
+        public byte[] ImageBytes
+        {
+            get => imageBytes;
+            set
+            {
+                imageBytes = value;
+                btnImg.IsEnabled = value != null;
+            }
+        }
+        public string WebString
+        {
+            get => webString;
+            set
+            {
+                webString = value;
+                btnWeb.IsEnabled = value != null;
+            }
+        }
+        public string RtfString
+        {
+            get => rtfString;
+            set
+            {
+                rtfString = value;
+                btnRtf.IsEnabled = value != null;
+            }
+        }
+
         private async Task GetData(DataPackageView data)
         {
+            DoingWork = true;
             Stopwatch stopwatch = new Stopwatch();
             stopwatch.Start();
 
@@ -61,7 +102,10 @@ namespace ClipboardViewer
             {
                 (i as CheckBox).IsChecked = false;
             }
-     
+            ImageBytes = null;
+            WebString = null;
+            RtfString = null;
+
 
             if (data.Contains(Bitmap))
             {
@@ -71,19 +115,18 @@ namespace ClipboardViewer
                     BitmapImage image = new BitmapImage();
                     await image.SetSourceAsync(stream);
                     img.Source = image;
-
-                    byte[] bytes = new byte[stream.Size];
-                    stream = await (await data.GetBitmapAsync()).OpenReadAsync();
-                    await stream.AsStreamForRead().ReadAsync(bytes, 0, (int)stream.Size);
-
-                    if (bytes.Length > 1e5)
+                   
+                    ImageBytes = new byte[stream.Size];
+                    stream.Seek(0);
+                    await stream.AsStreamForRead().ReadAsync(ImageBytes, 0, (int)stream.Size);
+                    if (ImageBytes.Length > 1e5)
                     {
-                        imageBytes = bytes;
+
                         txtImg.Text = ToMushMessage;
                     }
                     else
                     {
-                        WriteBinaryToTextBox(bytes, txtImg);
+                        WriteBinaryToTextBox(ImageBytes, txtImg);
                     }
                     chkImage.IsChecked = true;
                 }
@@ -97,48 +140,47 @@ namespace ClipboardViewer
             if (data.Contains(Html))
             {
                 try
-                { 
-                string source = await data.GetHtmlFormatAsync();
-             int index=   source.IndexOf('<');
-                if(index!=-1)
                 {
-                    web.NavigateToString(source.Remove(0,index));
-                }
-                
-                if(source.Length>1e5)
-                {
-                    webString = source;
-                    txtWeb.Text = ToMushMessage;
-                }
-                else
-                {
-                    txtWeb.Text = source;
-                }
-               chkHtml.IsChecked = true;
+                    WebString = await data.GetHtmlFormatAsync();
+                    int index = WebString.IndexOf('<');
+                    if (index != -1)
+                    {
+                        web.NavigateToString(WebString.Remove(0, index));
+                    }
+
+                    if (WebString.Length > 1e5)
+                    {
+                        txtWeb.Text = ToMushMessage;
+                    }
+                    else
+                    {
+                        txtWeb.Text = WebString;
+                    }
+                    chkHtml.IsChecked = true;
                 }
                 catch
                 {
                     WriteLog("检测到HTML，但是获取失败");
                 }
             }
+
             if (data.Contains(Rtf))
             {
                 try
-                { 
-                string rtf = await data.GetRtfAsync();
+                {
+                    RtfString = await data.GetRtfAsync();
                     rtfEdit.IsReadOnly = false;
-                rtfEdit.Document.SetText(Windows.UI.Text.TextSetOptions.FormatRtf, Encoding.Unicode.GetString(new UTF8Encoding(false).GetBytes(rtf)));
+                    rtfEdit.Document.SetText(Windows.UI.Text.TextSetOptions.FormatRtf, Encoding.Unicode.GetString(new UTF8Encoding(false).GetBytes(RtfString)));
                     rtfEdit.IsReadOnly = true;
-                    if (rtf.Length > 1e5)
-                {
-                    webString = rtf;
-                    txtWeb.Text = ToMushMessage;
-                }
-                else
-                {
-                    rtfTxt.Text = rtf.ToString();
-                }
-                chkRtf.IsChecked = true;
+                    if (RtfString.Length > 1e5)
+                    {
+                        txtWeb.Text = ToMushMessage;
+                    }
+                    else
+                    {
+                        rtfTxt.Text = RtfString.ToString();
+                    }
+                    chkRtf.IsChecked = true;
                 }
                 catch
                 {
@@ -147,22 +189,38 @@ namespace ClipboardViewer
             }
             if (data.Contains(StorageItems))
             {
+                storageItems.Clear();
                 try
-                { 
-                var items = await data.GetStorageItemsAsync();
-                foreach (var i in items)
                 {
-                    storageItems.Add(new StorageItemsBinding()
+                    var items = await data.GetStorageItemsAsync();
+                    foreach (var i in items)
                     {
-                        FileName = i.Name,
-                        Size = i.Attributes.HasFlag(Windows.Storage.FileAttributes.Directory) ? "" : ToReadableSize((await i.GetBasicPropertiesAsync()).Size),
-                        Path = i.Path,
-                        Image = i.Attributes.HasFlag(Windows.Storage.FileAttributes.Directory) ?
-                        new BitmapImage(new Uri(BaseUri, "/Assets/Fonder.png")) :
-                        new BitmapImage(new Uri(BaseUri, "/Assets/File.png")),
-                    });
-                }
-                chkStorage.IsChecked = true;
+                        if (i.Attributes.HasFlag(Windows.Storage.FileAttributes.Directory))
+                        {
+
+                            storageItems.Add(new StorageItemsBinding()
+                            {
+                                FileName = i.Name,
+                                Size ="",
+                                Path = i.Path,
+                                Image = new BitmapImage(new Uri(BaseUri, "/Assets/Fonder.png")) ,
+                            });
+                        }
+                        else
+                        {
+                            StorageItemThumbnail thumbnail = await (i as StorageFile).GetThumbnailAsync(ThumbnailMode.SingleItem);
+                            BitmapImage image = new BitmapImage();
+                            await image.SetSourceAsync(thumbnail);
+                            storageItems.Add(new StorageItemsBinding()
+                            {
+                                FileName = i.Name,
+                                Size = ToReadableSize((await i.GetBasicPropertiesAsync()).Size),
+                                Path = i.Path,
+                                Image =image, //new BitmapImage(new Uri(BaseUri, "/Assets/File.png")),
+                            });
+                        }
+                    }
+                    chkStorage.IsChecked = true;
                 }
                 catch
                 {
@@ -176,12 +234,12 @@ namespace ClipboardViewer
                     txt.Text = await data.GetTextAsync();
                     chkText.IsChecked = true;
                 }
-                   
+
                 catch
-            {
-                WriteLog("检测到文本，但是获取失败");
+                {
+                    WriteLog("检测到文本，但是获取失败");
+                }
             }
-        }
             if (data.Contains(WebLink))
             {
                 try
@@ -201,8 +259,9 @@ namespace ClipboardViewer
             }
             stopwatch.Stop();
             tbkStatus.Text = stopwatch.ElapsedMilliseconds.ToString() + "毫秒";
+            DoingWork = false;
         }
-    
+
 
         private async void Page_Loaded(object sender, RoutedEventArgs e)
         {
@@ -216,7 +275,7 @@ namespace ClipboardViewer
         private string ToReadableSize(ulong size)
         {
             double sizeD = size;
-            if(sizeD<1024)
+            if (sizeD < 1024)
             {
                 return size + "B";
             }
@@ -237,11 +296,9 @@ namespace ClipboardViewer
             }
             return (sizeD / 1024).ToString("0.00") + "TB";
         }
-        
-
-        private void WriteBinaryToTextBox(byte[] bytes,DataDisplayTextBox txt)
+        private void WriteBinaryToTextBox(byte[] bytes, DataDisplayTextBox txt)
         {
-            if(cbbBinaryDisplayMode.SelectedIndex==0)
+            if (cbbBinaryDisplayMode.SelectedIndex == 0)
             {
                 StringBuilder str = new StringBuilder();
                 foreach (var i in bytes)
@@ -255,14 +312,126 @@ namespace ClipboardViewer
                 txt.Text = Convert.ToBase64String(bytes);
             }
         }
-        private void WriteLog(string log="")
+        private void WriteLog(string log = "")
         {
-            if(log=="")
+            if (log == "")
             {
                 txtLog.Text += Environment.NewLine;
                 return;
             }
             txtLog.Text += DateTime.Now.ToString() + "\t" + log + Environment.NewLine;
         }
+
+        public static async Task<bool> PickAndSaveFile(byte[] data, IDictionary<string, string> filter, bool AllFileType=true, string sugguestedName = null)
+        {
+            if (data == null || (filter == null && !AllFileType))
+            {
+                throw new ArgumentNullException();
+            }
+            if (filter.Count == 0 && !AllFileType)
+            {
+                throw new Exception("筛选器内容为空");
+            }
+            FileSavePicker picker = new FileSavePicker();
+            if (filter != null && filter.Count > 0)
+            {
+                foreach (var i in filter)
+                {
+                    picker.FileTypeChoices.Add(i.Key, new List<string>() { i.Value });
+                }
+            }
+            if (AllFileType)
+            {
+                picker.FileTypeChoices.Add("所有文件", new List<string>() { "." });
+            }
+
+            if (sugguestedName != null)
+            {
+                picker.SuggestedFileName = sugguestedName;
+            }
+
+            var file = await picker.PickSaveFileAsync();
+            if(file==null)
+            {
+                return false;
+            }
+            await Task.Run(() => FileIO.WriteBufferAsync(file, data.AsBuffer()));
+            return true;
+        }
+
+        private async Task<Encoding> ChooseEncoding()
+        {
+            Encoding encoding = null;
+            MessageDialog dialog = new MessageDialog("请选择文件编码：", "保存文件");
+            dialog.Commands.Add(new UICommand("UTF8",  (p1) =>
+            {
+                encoding = Encoding.UTF8;
+            }));
+            dialog.Commands.Add(new UICommand("GB2312",  (p1) =>
+            {
+                encoding = Encoding.GetEncoding("GB2312");
+            }));
+           await dialog.ShowAsync();
+            return encoding;
+        }
+
+        private async void btnWeb_Click(object sender, RoutedEventArgs e)
+        {
+            Encoding encoding;
+            if((encoding=await ChooseEncoding())!=null)
+            {
+                try
+                {
+                    if (await PickAndSaveFile(encoding.GetBytes(WebString), new Dictionary<string, string>() { { "HTML文件", ".html" }, { "HTM文件", ".htm" }, { "文本文件", ".txt" } }))
+                    {
+                        await new MessageDialog("保存成功，此文件包含HTML代码以外的信息，若不需要删除<html>之前的数据即可。").ShowAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await new MessageDialog("保存失败：" + Environment.NewLine + Environment.NewLine + ex.ToString()).ShowAsync();
+
+                }
+            }
+        }
+
+        private async void btnImg_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (await PickAndSaveFile(ImageBytes, new Dictionary<string, string>() { { "png", ".bmp" }, { "文本文件", ".txt" } }))
+                {
+                    await new MessageDialog("保存成功。").ShowAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                await new MessageDialog("保存失败：" + Environment.NewLine + Environment.NewLine + ex.ToString()).ShowAsync();
+
+            }
+        }
+
+        private async void btnRtf_Click(object sender, RoutedEventArgs e)
+        {
+            Encoding encoding;
+            if ((encoding = await ChooseEncoding()) != null)
+            {
+                try
+                {
+                  if(  await PickAndSaveFile(encoding.GetBytes(RtfString), new Dictionary<string, string>() { { "RTF文件", ".rtf" }, { "文本文件", ".txt" } }))
+                    {
+                        await new MessageDialog("保存成功。").ShowAsync();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    await new MessageDialog("保存失败：" + Environment.NewLine + Environment.NewLine + ex.ToString()).ShowAsync();
+
+                }
+            }
+        }
+
+
+
     }
 }

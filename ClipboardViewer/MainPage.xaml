@@ -9,139 +9,148 @@
     mc:Ignorable="d"
     Loaded="Page_Loaded">
 
-
-    <Pivot x:Name="pvt" Margin="0,0,0,8"  Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <!--<PivotItem x:Name="pvtAppLink" Header="应用链接">
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <Pivot x:Name="pvt" Margin="0,0,0,16"  >
+            <!--<PivotItem x:Name="pvtAppLink" Header="应用链接">
                 <TextBox x:Name="txtAppLink" />
             </PivotItem>-->
-        <PivotItem x:Name="pvtMain" >
-            <PivotItem.Header>
-                <TextBlock Margin="0,0,32,0">主页</TextBlock>
-            </PivotItem.Header>
-            <Grid>
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto"/>
-                    <ColumnDefinition Width="16"/>
-                    <ColumnDefinition Width="*"/>
-                </Grid.ColumnDefinitions>
-                <Grid >
+            <PivotItem x:Name="pvtMain" >
+                <PivotItem.Header>
+                    <TextBlock Margin="0,0,32,0">主页</TextBlock>
+                </PivotItem.Header>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="16"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid >
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+                        <TextBlock Text="可用的数据：" Margin="0,0,0,8"/>
+                        <ListBox x:Name="lbxUsable" Grid.Row="2" Background="Transparent" IsHitTestVisible="False">
+                            <CheckBox x:Name="chkImage">图片</CheckBox>
+                            <CheckBox x:Name="chkHtml">HTML</CheckBox>
+                            <CheckBox x:Name="chkRtf">富文本</CheckBox>
+                            <CheckBox x:Name="chkStorage">文件（夹）</CheckBox>
+                            <CheckBox x:Name="chkText">文本</CheckBox>
+                            <CheckBox x:Name="chkLink">网页链接</CheckBox>
+                        </ListBox>
+                    </Grid>
+
+                    <Grid Grid.Column="2">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <ComboBox x:Name="cbbBinaryDisplayMode" SelectedIndex="0" HorizontalAlignment="Stretch">
+                            <ComboBoxItem Content="16进制"/>
+                            <ComboBoxItem Content="BASE64"/>
+                        </ComboBox>
+                        <TextBox x:Name="txtLog" AcceptsReturn="True"  IsReadOnly="True" Grid.Row="2" Header="事件"/>
+                        <TextBlock x:Name="tbkStatus" Grid.Row="6" HorizontalAlignment="Right"/>
+                    </Grid>
+
+                </Grid>
+            </PivotItem>
+
+
+
+
+            <PivotItem x:Name="pvtImage" Header="图片">
+                <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="8"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="可用的数据：" Margin="0,0,0,8"/>
-                    <ListBox x:Name="lbxUsable" Grid.Row="2" Background="Transparent" IsHitTestVisible="False">
-                        <CheckBox x:Name="chkImage">图片</CheckBox>
-                        <CheckBox x:Name="chkHtml">HTML</CheckBox>
-                        <CheckBox x:Name="chkRtf">富文本</CheckBox>
-                        <CheckBox x:Name="chkStorage">文件（夹）</CheckBox>
-                        <CheckBox x:Name="chkText">文本</CheckBox>
-                        <CheckBox x:Name="chkLink">网页链接</CheckBox>
-                    </ListBox>
+                    <Image x:Name="img" />
+                    <controls:GridSplitter Grid.Row="1" Background="LightGray"/>
+                    <local:DataDisplayTextBox x:Name="txtImg" Grid.Row="2" Header="二进制数据"/>
+                    <Button x:Name="btnImg" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,8,8" Click="btnImg_Click">保存为文件</Button>
                 </Grid>
 
-                <Grid Grid.Column="2">
+            </PivotItem>
+
+
+
+            <PivotItem x:Name="pvtWeb" Header="HTML">
+                <Grid>
                     <Grid.RowDefinitions>
+                        <RowDefinition Height="2*"/>
                         <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="8"/>
                         <RowDefinition Height="*"/>
-                        <RowDefinition Height="8"/>
-                        <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <ComboBox x:Name="cbbBinaryDisplayMode" SelectedIndex="0" HorizontalAlignment="Stretch">
-                        <ComboBoxItem Content="16进制"/>
-                        <ComboBoxItem Content="BASE64"/>
-                    </ComboBox>
-                    <TextBox x:Name="txtLog" AcceptsReturn="True"  IsReadOnly="True" Grid.Row="2" Header="事件"/>
-                    <TextBlock x:Name="tbkStatus" Grid.Row="6" HorizontalAlignment="Right"/>
+                    <WebView  x:Name="web"/>
+                    <controls:GridSplitter Grid.Row="1" Background="LightGray"/>
+                    <local:DataDisplayTextBox x:Name="txtWeb" Grid.Row="2" Header="源码"/>
+                    <Button x:Name="btnWeb" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,8,8" Click="btnWeb_Click">保存为文件</Button>
+
                 </Grid>
 
-            </Grid>
-        </PivotItem>
-        <PivotItem x:Name="pvtImage" Header="图片">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="2*"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <Image x:Name="img" />
-                <controls:GridSplitter Grid.Row="1" Background="LightGray"/>
-                <local:DataDisplayTextBox x:Name="txtImg" Grid.Row="2" Header="二进制数据"/>
-
-            </Grid>
-
-        </PivotItem>
+            </PivotItem>
 
 
 
-        <PivotItem x:Name="pvtWeb" Header="HTML">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="2*"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <WebView  x:Name="web"/>
-                <controls:GridSplitter Grid.Row="1" Background="LightGray"/>
+            <PivotItem x:Name="pvtRtf" Header="RTF">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <RichEditBox x:Name="rtfEdit" IsReadOnly="True" Header="目标样式"/>
+                    <controls:GridSplitter Grid.Row="1" Background="LightGray"/>
+                    <local:DataDisplayTextBox x:Name="rtfTxt"  Header="源码" Grid.Row="2"/>
+                    <Button x:Name="btnRtf" Grid.Row="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="0,0,8,8" Click="btnRtf_Click">保存为文件</Button>
 
-                <local:DataDisplayTextBox x:Name="txtWeb" Grid.Row="2" Header="源码"/>
-            </Grid>
+                </Grid>
+            </PivotItem>
+            <PivotItem x:Name="pvtStorage" Header="文件（夹）">
 
-        </PivotItem>
+                <ListView x:Name="lvwFiles"  >
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid  Margin="6">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="64" Height="64">
+                                    <Image  Source="{Binding Image}" Stretch="UniformToFill"/>
+                                </Border>
+                                <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="10,0,0,0">
+                                    <TextBlock Text="{Binding FileName}" TextWrapping="NoWrap"/>
+                                    <TextBlock Text="{Binding Size}"  TextWrapping="NoWrap"/>
+                                    <TextBlock Text="{Binding Path}"  MaxHeight="60"/>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </PivotItem>
 
+            <PivotItem x:Name="pvtText" Header="文本">
+                <local:DataDisplayTextBox x:Name="txt"/>
+            </PivotItem>
+            <PivotItem x:Name="pvtWebLink" Header="网页链接" >
+                <StackPanel VerticalAlignment="Center" HorizontalAlignment="Stretch" Orientation="Vertical">
+                    <TextBox x:Name="txtOriginal" Header="原始字符串"  Margin="0,0,0,16"/>
+                    <TextBox x:Name="txtAbsPath" Header="绝对地址"  Margin="0,0,0,16"/>
+                    <TextBox x:Name="txtAbsUri" Header="标识符"  Margin="0,0,0,16"/>
+                    <TextBox x:Name="txtHost" Header="主机地址"  Margin="0,0,0,16"/>
+                    <TextBox x:Name="txtAuthority" Header="所有者"  Margin="0,0,0,16"/>
+                </StackPanel>
+            </PivotItem>
+        </Pivot>
+        <ProgressRing x:Name="prgLoading" Width="96" Height="96" Grid.RowSpan="3" Grid.Column="3"/>
+        <Grid x:Name="grdLoding" Grid.RowSpan="3" Grid.ColumnSpan="3" Visibility="Collapsed" Opacity="0.5" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}"/>
 
-
-        <PivotItem x:Name="pvtRtf" Header="RTF">
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="*"/>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
-                <RichEditBox x:Name="rtfEdit" IsReadOnly="True" Header="目标样式"/>
-                <controls:GridSplitter Grid.Row="1" Background="LightGray"/>
-
-                <local:DataDisplayTextBox x:Name="rtfTxt"  Header="源码" Grid.Row="2"/>
-            </Grid>
-        </PivotItem>
-        <PivotItem x:Name="pvtStorage" Header="文件（夹）">
-
-            <ListView x:Name="lvwFiles"  >
-                <ListView.ItemTemplate>
-                    <DataTemplate>
-                        <Grid  Margin="6">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
-                            <Border Width="64" Height="64">
-                                <Image  Source="{Binding Image}" Stretch="UniformToFill"/>
-                            </Border>
-                            <StackPanel Grid.Column="1" VerticalAlignment="Top" Margin="10,0,0,0">
-                                <TextBlock Text="{Binding FileName}" TextWrapping="NoWrap"/>
-                                <TextBlock Text="{Binding Size}"  TextWrapping="NoWrap"/>
-                                <TextBlock Text="{Binding Path}"  MaxHeight="60"/>
-                            </StackPanel>
-                        </Grid>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
-        </PivotItem>
-
-        <PivotItem x:Name="pvtText" Header="文本">
-            <local:DataDisplayTextBox x:Name="txt"/>
-        </PivotItem>
-        <PivotItem x:Name="pvtWebLink" Header="网页链接" >
-            <StackPanel VerticalAlignment="Center" HorizontalAlignment="Stretch" Orientation="Vertical">
-                <TextBox x:Name="txtOriginal" Header="原始字符串"  Margin="0,0,0,16"/>
-                <TextBox x:Name="txtAbsPath" Header="绝对地址"  Margin="0,0,0,16"/>
-                <TextBox x:Name="txtAbsUri" Header="标识符"  Margin="0,0,0,16"/>
-                <TextBox x:Name="txtHost" Header="主机地址"  Margin="0,0,0,16"/>
-                <TextBox x:Name="txtAuthority" Header="所有者"  Margin="0,0,0,16"/>
-            </StackPanel>
-        </PivotItem>
-    </Pivot>
-
+    </Grid>
 </Page>
